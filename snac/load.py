@@ -13,15 +13,11 @@ import configparser
 import ast
 import subprocess
 import sys
-import time
 
 # snac
 from . import paths
-# from . import quantities
-# from . import analysis
 from . import tools
 
-# TODO:
 
 # =======================================================================
 #                      Config files
@@ -80,10 +76,11 @@ def get_dat(model, cols, reload=False, save=True, verbose=True):
     if dat_table is None:
         dat_table = extract_dat(model, cols=cols, verbose=verbose)
         if save:
-            save_dat_cache(dat_table, model=model, 
+            save_dat_cache(dat_table, model=model,
                            verbose=verbose)
 
     return dat_table
+
 
 def extract_dat(model, cols, verbose=True):
     """Extract data from .dat file
@@ -93,10 +90,9 @@ def extract_dat(model, cols, verbose=True):
     model : str
     cols : []
         list with column names
-    run: str
     verbose : bool
     """
- 
+
     df = pd.DataFrame()
 
     i = 0
@@ -104,23 +100,23 @@ def extract_dat(model, cols, verbose=True):
         filepath = paths.dat_filepath(model=model, quantity=key)
         tools.printv(f'Extracting dat: {filepath}', verbose=verbose)
 
-        if (key == 'conservation'):
-            df_temp1 = pd.read_fwf(filepath, header=None, \
-                names=['time', 'Egrav', 'Eint', 'Ekin', 'Etot', 'EtotmInt'])
+        if key == 'conservation':
+            df_temp1 = pd.read_fwf(filepath, header=None,
+                                   names=['time', 'Egrav', 'Eint', 'Ekin', 'Etot', 'EtotmInt'])
             df_temp1 = df_temp1.drop(columns='EtotmInt')
             for col in df_temp1:
                 df[col] = df_temp1[col]
-        else:        
+        else:
             df_temp = pd.read_fwf(filepath, header=None, names=['time', key])
 
             df[key] = df_temp[key]
         i += 1
 
-    if ('conservation' in cols): # drop last row: no energy data written in last timestep.
-        # df = df.drop(df.tail(1).index,inplace=True)
+    if 'conservation' in cols:  # drop last row: no energy data written in last timestep.
         return df[:-1]
     else:
         return df
+
 
 def save_dat_cache(dat, model, verbose=True):
     """Save pre-extracted .dat quantities, for faster loading
@@ -129,7 +125,6 @@ def save_dat_cache(dat, model, verbose=True):
     dat : pd.DataFrame
         data table as returned by extract_dat()
     model : str
-    run : str
     verbose : bool
     """
     ensure_temp_dir_exists(model, verbose=False)
@@ -144,12 +139,12 @@ def load_dat_cache(model, verbose=True):
     parameters
     ----------
     model : str
-    run : str
     verbose : bool
     """
     filepath = paths.dat_temp_filepath(model=model)
     tools.printv(f'Loading dat cache: {filepath}', verbose)
-    return pd.read_pickle(filepath)    
+    return pd.read_pickle(filepath)
+
 
 # ===============================================================
 #                      Profiles
@@ -178,10 +173,11 @@ def get_profiles(model, fields, reload=False, save=True, verbose=True):
     if dat_table is None:
         dat_table = extract_profile(model, fields=fields, verbose=verbose)
         if save:
-            save_profile_cache(dat_table, model=model, 
-                           verbose=verbose)
+            save_profile_cache(dat_table, model=model,
+                               verbose=verbose)
 
     return dat_table
+
 
 def extract_profile(model, fields, verbose=True):
     """Extract data from .xg file
@@ -191,10 +187,9 @@ def extract_profile(model, fields, verbose=True):
     model : str
     fields : []
         dictionary with column names
-    run: str
     verbose : bool
     """
- 
+
     df = {}
 
     for key in fields:
@@ -205,6 +200,7 @@ def extract_profile(model, fields, verbose=True):
 
     return df
 
+
 def save_profile_cache(dat, model, verbose=True):
     """Save pre-extracted .xg quantities, for faster loading
     parameters
@@ -212,7 +208,6 @@ def save_profile_cache(dat, model, verbose=True):
     dat : dict
         data as returned by extract_profile()
     model : str
-    run : str
     verbose : bool
     """
     ensure_temp_dir_exists(model, verbose=False)
@@ -220,19 +215,20 @@ def save_profile_cache(dat, model, verbose=True):
 
     tools.printv(f'Saving profile cache: {filepath}', verbose)
 
-    pickle.dump( dat, open( filepath, "wb" ) )
+    pickle.dump(dat, open(filepath, "wb"))
+
 
 def load_profile_cache(model, verbose=True):
     """Load pre-extracted .xg quantities (see: save_dat_cache)
     parameters
     ----------
     model : str
-    run : str
     verbose : bool
     """
     filepath = paths.profile_temp_filepath(model=model)
     tools.printv(f'Loading profile cache: {filepath}', verbose)
-    return pickle.load( open(filepath, 'rb') )
+    return pickle.load(open(filepath, 'rb'))
+
 
 def xg_to_dict(fn):
     """
@@ -253,13 +249,14 @@ def xg_to_dict(fn):
                 time = float(cols[-1])
                 dd[time] = []
             # In time data -- build x,y arrays                                                                        
-            elif len(cols)==2:
+            elif len(cols) == 2:
                 dd[time].append(np.fromstring(line, sep=' '))
             # End of time data (blank line) -- make list into array                                                   
             else:
                 dd[time] = np.array(dd[time])
 
     return dd
+
 
 # =======================================================================
 #                      Scalars
@@ -301,6 +298,7 @@ def get_info(model):
 
     return e_init, e_bomb, mass
 
+
 # ===============================================================
 #              Misc. file things
 # ===============================================================
@@ -339,4 +337,4 @@ def ensure_temp_dir_exists(model, verbose=True):
     verbose : bool
     """
     temp_path = paths.temp_path(model)
-    try_mkdir(temp_path, skip=True, verbose=verbose)    
+    try_mkdir(temp_path, skip=True, verbose=verbose)

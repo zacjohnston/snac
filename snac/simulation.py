@@ -50,10 +50,12 @@ from . import plot_tools
 from . import tools
 from . import quantities
 
+
 class Simulation:
     """
     Main class containing data for one simulation.
     """
+
     def __init__(self, model, config='snec',
                  output_dir='Data', verbose=True, load_all=True,
                  reload=False, save=True, load_profiles=True):
@@ -85,23 +87,21 @@ class Simulation:
         self.model_path = paths.model_path(model=model)
         self.output_path = os.path.join(self.model_path, output_dir)
 
-        self.config       = None  # model-specific configuration; see load_config(). Dict
-        self.dat          = None  # integrated data from .dat; see load_dat()
-        self.profiles     = None  # mass profile data for each timestep
+        self.config = None        # model-specific configuration; see load_config(). Dict
+        self.dat = None           # integrated data from .dat; see load_dat()
+        self.profiles = None      # mass profile data for each timestep
         self.solo_profile = None  # profile at one timestep
-        self.scalars      = None  # scalar quantities: time of shock breakout..
-        self.vFe          = None  # Holds v_Fe(t)
-        self.tau          = None  # Hold tau_sob
+        self.scalars = None       # scalar quantities: time of shock breakout..
+        self.vFe = None           # Holds v_Fe(t)
+        self.tau = None           # Hold tau_sob
 
         self.load_config(config=config)
 
         if load_all:
             self.load_all(reload=reload, save=save, load_profiles=load_profiles)
-        
-        self.len = len(self.dat["time"])-1
 
         t1 = time.time()
-        self.printv(f'Model load time: {t1-t0:.3f} s')
+        self.printv(f'Model load time: {t1 - t0:.3f} s')
 
     # =======================================================
     #                      Setup/init
@@ -142,12 +142,13 @@ class Simulation:
         """
         self.load_dat(reload=reload, save=save)
         self.get_scalars()
-        self.dat['time'] -= self.scalars['t_sb'] # adjust to shock breakout. 
+        self.dat['time'] -= self.scalars['t_sb']  # adjust to shock breakout.
         if load_profiles:
             self.load_all_profiles(reload=reload, save=save)
-            self.get_profile_day()  
+            self.get_profile_day()
 
-    # =======================================================
+            # =======================================================
+
     #                   Loading Data
     # =======================================================
     def load_dat(self, reload=False, save=True):
@@ -159,12 +160,12 @@ class Simulation:
         save : bool
         """
         self.dat = load.get_dat(
-                        model=self.model,
-                        cols=self.config['dat_quantities']['fields'], reload=reload,
-                        save=save, verbose=self.verbose)
+            model=self.model,
+            cols=self.config['dat_quantities']['fields'], reload=reload,
+            save=save, verbose=self.verbose)
 
     def load_all_profiles(self, reload=False, save=True):
-            """
+        """
             Load profiles
 
             parameters
@@ -172,13 +173,13 @@ class Simulation:
             reload : bool
             save : bool
             """
-            config = self.config['profiles']
+        config = self.config['profiles']
 
-            self.profiles = load.get_profiles(
-                                    model=self.model,
-                                    fields=config['fields'],
-                                    reload=reload, save=save, verbose=self.verbose)
-                            
+        self.profiles = load.get_profiles(
+            model=self.model,
+            fields=config['fields'],
+            reload=reload, save=save, verbose=self.verbose)
+
     def get_scalars(self):
         """
         Compute all necessary SNEC scalar quantities
@@ -205,12 +206,12 @@ class Simulation:
 
         Parameters:
         day : float
-        """       
-        
-        time = self.dat['time'] 
+        """
+
+        time = self.dat['time']
         if (day >= 0.0):
-            ind = np.max( np.where(time <= day * 86400.) )
-        else: 
+            ind = np.max(np.where(time <= day * 86400.))
+        else:
             ind = 0
 
         for col in self.dat:
@@ -233,30 +234,29 @@ class Simulation:
 
         cols = self.config['profiles']['fields']
 
-        times = np.array([*self.profiles['rho']]) #returns dictionary keys - the times.
+        times = np.array([*self.profiles['rho']])  # returns dictionary keys - the times.
         # This isolates the key for the data just before [day] days.
 
         if post_breakout:
 
-            if (day == 0.0): # If day = 0, add some padding so we're just through shock breakout.
-                t = times[np.max( np.where( times - self.scalars['t_sb'] <= day*86400. ) ) + 1]
+            if (day == 0.0):  # If day = 0, add some padding so we're just through shock breakout.
+                t = times[np.max(np.where(times - self.scalars['t_sb'] <= day * 86400.)) + 1]
             elif (day == -1):
                 t = times[0]
             else:
-                t = times[np.max( np.where( times - self.scalars['t_sb'] <= day*86400. ) ) + 0]
+                t = times[np.max(np.where(times - self.scalars['t_sb'] <= day * 86400.)) + 0]
 
         else:
-            t = times[np.max( np.where( times <= day*86400. ) ) + 0]
-
+            t = times[np.max(np.where(times <= day * 86400.)) + 0]
 
         df = pd.DataFrame()
         # All profiles in the dict contain mass as first column. Just grab from one
-        df['mass'] = self.profiles['rho'][t][:,0] 
+        df['mass'] = self.profiles['rho'][t][:, 0]
         for col in cols:
-            df[col] = self.profiles[col][t][:,1]
+            df[col] = self.profiles[col][t][:, 1]
 
-        df.time = t / 86400 # Actual timestamp, post shock breakout.
-        df.day = day        # time looking for. 
+        df.time = t / 86400  # Actual timestamp, post shock breakout.
+        df.day = day  # time looking for.
 
         self.solo_profile = df
 
@@ -288,18 +288,18 @@ class Simulation:
         if (self.tau == None):
             self.tau = []
 
-        tau = quantities.tau_sob(density = self.solo_profile['rho'], 
-                                temp=self.solo_profile['temp'], 
-                                X=self.solo_profile['H_frac'], 
-                                t_exp = day + self.scalars['t_sb']/86400)
+        tau = quantities.tau_sob(density=self.solo_profile['rho'],
+                                 temp=self.solo_profile['temp'],
+                                 X=self.solo_profile['H_frac'],
+                                 t_exp=day + self.scalars['t_sb'] / 86400)
 
-        self.tau.append( tau )
-        
+        self.tau.append(tau)
+
         self.scalars['v_Fe'] = quantities.iron_velocity(
-                                    self.solo_profile['vel'], tau_sob=tau)
+            self.solo_profile['vel'], tau_sob=tau)
 
-        self.vFe.append( quantities.iron_velocity(
-                                    self.solo_profile['vel'], tau_sob=tau) )
+        self.vFe.append(quantities.iron_velocity(
+            self.solo_profile['vel'], tau_sob=tau))
 
     def compute_total_energy(self, day=0.0):
         """
@@ -318,12 +318,11 @@ class Simulation:
             self.get_profile_day(day=day)
 
         self.solo_profile['e_tot'] = quantities.total_energy(
-                                        mass=self.solo_profile['mass'],
-                                        radius=self.solo_profile['radius'], 
-                                        vel=self.solo_profile['vel'], 
-                                        rho=self.solo_profile['rho'], 
-                                        eps=self.solo_profile['eps'])
-                                
+            mass=self.solo_profile['mass'],
+            radius=self.solo_profile['radius'],
+            vel=self.solo_profile['vel'],
+            rho=self.solo_profile['rho'],
+            eps=self.solo_profile['eps'])
 
     def compute_bound_mass(self, day=0.0):
         """
@@ -335,7 +334,7 @@ class Simulation:
         """
 
         if "e_tot" not in self.solo_profile:
-            self.compute_total_energy(day = day)
+            self.compute_total_energy(day=day)
 
         if self.solo_profile is None:
             self.get_profile_day(day=day)
@@ -344,9 +343,9 @@ class Simulation:
             self.get_profile_day(day=day)
 
         self.scalars['bound_mass'] = quantities.bound_mass(
-                                    e_tot=self.solo_profile['e_tot'],
-                                    mass=self.solo_profile['mass'])
-        
+            e_tot=self.solo_profile['e_tot'],
+            mass=self.solo_profile['mass'])
+
     def compute_ejecta_mass(self, day=0.0):
         """
         Compute bound mass. See quantities.bound_mass()
@@ -363,10 +362,9 @@ class Simulation:
             self.get_profile_day(day=day)
 
         self.scalars['M_ej'] = quantities.ejecta_mass(
-                                    e_tot = self.solo_profile['e_tot'],
-                                    mass = self.solo_profile['mass']
+            e_tot=self.solo_profile['e_tot'],
+            mass=self.solo_profile['mass']
         )
-
 
     # =======================================================
     #                      Plotting
@@ -388,7 +386,7 @@ class Simulation:
         max_cols : bool
         sub_figsize : tuple
         """
-        
+
         y_var_list = tools.ensure_sequence(y_var_list)
         n_var = len(y_var_list)
         fig, ax = plot_tools.setup_subplots(n_var, max_cols=max_cols,
@@ -434,8 +432,8 @@ class Simulation:
         self._set_ax_scales(ax, y_var, x_var=x_var, y_scale=y_scale, x_scale=x_scale)
         self._set_ax_labels(ax, x_var=x_var, y_var=y_var)
 
-        x = self.profiles[y_var][t][:,0]
-        y = self.profiles[y_var][t][:,1]
+        x = self.profiles[y_var][t][:, 0]
+        y = self.profiles[y_var][t][:, 1]
 
         ax.plot(x, y, ls=linestyle, marker=marker, label=label)
 
@@ -445,9 +443,9 @@ class Simulation:
         return fig
 
     def plot_slider(self, y_var, x_var='mass', y_scale=None, x_scale=None,
-                figsize=(8, 6), title=True, xlims=None, ylims=None, legend=True,
-                linestyle='-', marker=''):
-                
+                    figsize=(8, 6), title=True, xlims=None, ylims=None, legend=True,
+                    linestyle='-', marker=''):
+
         """
         Plot interactive slider of profile for given variable
 
@@ -473,12 +471,12 @@ class Simulation:
         slider = Slider(slider_ax, 'time', t_min, t_max, valinit=t_max, valstep=1)
 
         self.plot_profile(t_max, y_var=y_var, x_var=x_var, y_scale=y_scale,
-                            x_scale=x_scale, ax=profile_ax, legend=legend,
-                            title=title, ylims=ylims, xlims=xlims, figsize=figsize,
-                            linestyle=linestyle, marker=marker)
+                          x_scale=x_scale, ax=profile_ax, legend=legend,
+                          title=title, ylims=ylims, xlims=xlims, figsize=figsize,
+                          linestyle=linestyle, marker=marker)
 
         def update(t):
-            self.get_profile_day(day = t / 86400., post_breakout=False)
+            self.get_profile_day(day=t / 86400., post_breakout=False)
             profile = self.solo_profile
             y_profile = profile[y_var]
 
@@ -491,9 +489,8 @@ class Simulation:
         slider.on_changed(update)
         return fig, slider
 
-
     def plot_dat(self, y_var, y_scale='log', display=True, ax=None, figsize=(8, 6),
-                linestyle='-', marker=''):
+                 linestyle='-', marker=''):
         """Plot quantity from dat file
         parameters
         ----------
@@ -516,8 +513,6 @@ class Simulation:
 
         return fig, ax
 
-
-
     # =======================================================
     #                      Plotting Tools
     # =======================================================
@@ -529,7 +524,7 @@ class Simulation:
             parameter key, e.g. 'r', 'temp', 'dens'
         """
         return self.config['plotting']['labels'].get(key, key)
- 
+
     def _set_ax_scales(self, ax, y_var, x_var, y_scale, x_scale):
         """Set axis scales (linear, log)
         parameters
@@ -609,12 +604,11 @@ class Simulation:
         slider_ax = fig.add_axes([0.1, 0.05, 0.8, 0.05])
 
         return fig, profile_ax, slider_ax
-        
+
     def _get_slider_bounds(self):
         """
         Return t_max, t_min
         """
         t_max = [*self.profiles['rho']][-1]
-        t_min = 0.0 #- self.scalars['t_sb']
+        t_min = 0.0  # - self.scalars['t_sb']
         return t_max, t_min
-
