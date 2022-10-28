@@ -183,10 +183,7 @@ class Simulation:
         """
         Compute all necessary SNEC scalar quantities
         """
-
-        config = self.config['scalars']
-        self.scalars = load.get_scalars(model=self.model, var=config['fields'])
-
+        self.scalars = load.get_scalars(model=self.model)
 
     # =======================================================
     #                   Manipulation

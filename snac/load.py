@@ -265,7 +265,7 @@ def xg_to_dict(fn):
 #                      Scalars
 # =======================================================================
 
-def get_scalars(model, var):
+def get_scalars(model):
     """
     Get various SNEC scalar outputs. Needs work for scalability.
 
@@ -274,46 +274,15 @@ def get_scalars(model, var):
     model : str
     var : []
     """
-    E_init, E_bomb, m_preSN, tsb = get_info(model)
+    e_init, e_bomb, m_pre_sn = get_info(model)
 
-    if ('zams' in var or 'masscut' in var):
-        zams, masscut = get_params(model, var)
-     
-    df = {}
-    if 'masscut' in var:
-        df['masscut'] = float(masscut)
-    if 't_sb' in var:
-        df['t_sb'] = float(tsb)
-    if 'M_preSN' in var:
-        df['M_preSN'] = float(m_preSN)
-    if 'zams' in var:
-        df['zams'] = float(zams) # Specific to a profile naming scheme.
-
-    df["E_init"] = E_init
-    df["E_bomb"] = E_bomb
+    df = {"E_init": e_init,
+          "e_bomb": e_bomb,
+          'M_preSN': m_pre_sn,
+          }
 
     return df
 
-def get_params(model, var):
-    """ Get information from SNEC parameters file. """
-    # TODO: add options to config file to specify what to get here.
-
-    fn = os.path.join(paths.output_path(model), 'parameters')
-    with open(fn, "r") as f:
-        for myline in f:
-            # Find the line starting with mass_excised, split it at the '='
-            if('masscut' in var and "mass_excised" in myline ):
-                masscut = myline.split("= ")[1]
-
-            # This is specific to how we name our profiles. s9.0_hydro.....
-            if('zams' in var and myline[0:13] == ' profile_name' ):
-                profile = myline.split("= ")[1]
-                zams = (profile.split("_")[0]).split("s")[2]
-
-            if ('zams' not in var): zams = '0.0'
-            if ('masscut' not in var): masscut = '0.0'
-
-    return zams.strip("\n"), masscut.strip("\n").split(" ")[0]
 
 def get_info(model):
     """
@@ -324,15 +293,13 @@ def get_info(model):
     with open(fn, "r") as f:
         for line in f:
             if 'Mass of the model' in line:
-                mass = line.split()[-3]
-            elif("Total energy of the model" in line):
-                E_init = float(line.split()[-2])
-            elif("Total energy of the bomb" in line):
-                E_bomb = float(line.split()[-2])
+                mass = float(line.split()[-3])
+            elif "Total energy of the model" in line:
+                e_init = float(line.split()[-2])
+            elif "Total energy of the bomb" in line:
+                e_bomb = float(line.split()[-2])
 
-        tsb = 0.0
-
-    return E_init, E_bomb, mass, tsb
+    return e_init, e_bomb, mass
 
 # ===============================================================
 #              Misc. file things
