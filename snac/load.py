@@ -330,7 +330,8 @@ def get_info(model, var):
                 E_init = float(myline.split("= ")[1].split("  ergs")[0])
             if("Total energy of the bomb" in myline):
                 E_bomb = float(myline.split("= ")[1].split("  ergs")[0])
-        tsb = tsb.split(" ")[3]
+        # tsb = tsb.split(" ")[3]
+        tsb = 0.0
         mass = mass.split(" ")[3]
 
     return float(E_init), float(E_bomb), mass, tsb
