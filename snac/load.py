@@ -274,19 +274,21 @@ def get_scalars(model, var):
     model : str
     var : []
     """
+    E_init, E_bomb, m_preSN, tsb = get_info(model)
 
-    if ('M_preSN' in var or 't_sb' in var):
-        E_init, E_bomb, m_preSN, tsb = get_info(model, var)
-    else:
-        E_init, E_bomb, _, _ = get_info(model, var)
     if ('zams' in var or 'masscut' in var):
         zams, masscut = get_params(model, var)
      
     df = {}
-    if 'masscut' in var: df['masscut'] = float(masscut)
-    if 't_sb' in var: df['t_sb'] = float(tsb)
-    if 'M_preSN' in var: df['M_preSN'] = float(m_preSN)
-    if 'zams' in var: df['zams'] = float(zams) # Specific to a profile naming scheme. 
+    if 'masscut' in var:
+        df['masscut'] = float(masscut)
+    if 't_sb' in var:
+        df['t_sb'] = float(tsb)
+    if 'M_preSN' in var:
+        df['M_preSN'] = float(m_preSN)
+    if 'zams' in var:
+        df['zams'] = float(zams) # Specific to a profile naming scheme.
+
     df["E_init"] = E_init
     df["E_bomb"] = E_bomb
 
@@ -313,28 +315,24 @@ def get_params(model, var):
 
     return zams.strip("\n"), masscut.strip("\n").split(" ")[0]
 
-def get_info(model, var):
+def get_info(model):
     """
     Extract information from info.dat
     """
-
     fn = os.path.join(paths.output_path(model), 'info.dat')
 
     with open(fn, "r") as f:
-        for myline in f:
-            if( myline[0:5] == ' Mass'):
-                mass = myline.split("= ")[1]
-            if( myline[0:17] == ' Time of breakout'):
-                tsb = myline.split("= ")[1]
-            if("Total energy of the model" in myline):
-                E_init = float(myline.split("= ")[1].split("  ergs")[0])
-            if("Total energy of the bomb" in myline):
-                E_bomb = float(myline.split("= ")[1].split("  ergs")[0])
-        # tsb = tsb.split(" ")[3]
-        tsb = 0.0
-        mass = mass.split(" ")[3]
+        for line in f:
+            if 'Mass of the model' in line:
+                mass = line.split()[-3]
+            elif("Total energy of the model" in line):
+                E_init = float(line.split()[-2])
+            elif("Total energy of the bomb" in line):
+                E_bomb = float(line.split()[-2])
 
-    return float(E_init), float(E_bomb), mass, tsb
+        tsb = 0.0
+
+    return E_init, E_bomb, mass, tsb
 
 # ===============================================================
 #              Misc. file things
