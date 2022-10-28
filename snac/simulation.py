@@ -139,16 +139,16 @@ class Simulation:
         ----------
         reload : bool
         save : bool
+        load_profiles :bool
         """
         self.load_dat(reload=reload, save=save)
         self.get_scalars()
-        self.dat['time'] -= self.scalars['t_sb']  # adjust to shock breakout.
+
         if load_profiles:
             self.load_all_profiles(reload=reload, save=save)
             self.get_profile_day()
 
-            # =======================================================
-
+    # =======================================================
     #                   Loading Data
     # =======================================================
     def load_dat(self, reload=False, save=True):
@@ -220,7 +220,7 @@ class Simulation:
             label = col + '_solo'
             self.scalars[label] = self.dat[col][ind]
 
-    def get_profile_day(self, day=0.0, post_breakout=True):
+    def get_profile_day(self, day=0.0):
         """
         Isolate mass profiles at a specific day, move from dict to DataFrame.
 
@@ -237,15 +237,10 @@ class Simulation:
         times = np.array([*self.profiles['rho']])  # returns dictionary keys - the times.
         # This isolates the key for the data just before [day] days.
 
-        if post_breakout:
-
-            if (day == 0.0):  # If day = 0, add some padding so we're just through shock breakout.
-                t = times[np.max(np.where(times - self.scalars['t_sb'] <= day * 86400.)) + 1]
-            elif (day == -1):
-                t = times[0]
-            else:
-                t = times[np.max(np.where(times - self.scalars['t_sb'] <= day * 86400.)) + 0]
-
+        if day == 0.0:  # If day = 0, add some padding so we're just through shock breakout.
+            t = times[np.max(np.where(times <= day * 86400.)) + 1]
+        elif day == -1:
+            t = times[0]
         else:
             t = times[np.max(np.where(times <= day * 86400.)) + 0]
 
@@ -291,7 +286,7 @@ class Simulation:
         tau = quantities.tau_sob(density=self.solo_profile['rho'],
                                  temp=self.solo_profile['temp'],
                                  X=self.solo_profile['H_frac'],
-                                 t_exp=day + self.scalars['t_sb'] / 86400)
+                                 t_exp=day)
 
         self.tau.append(tau)
 
@@ -476,7 +471,7 @@ class Simulation:
                           linestyle=linestyle, marker=marker)
 
         def update(t):
-            self.get_profile_day(day=t / 86400., post_breakout=False)
+            self.get_profile_day(day=t / 86400)
             profile = self.solo_profile
             y_profile = profile[y_var]
 
@@ -548,7 +543,6 @@ class Simulation:
         parameters
         ----------
         ax : Axes
-        chk : int
         title : bool
         """
         # TODO: account for different zero points/starting times
@@ -610,5 +604,5 @@ class Simulation:
         Return t_max, t_min
         """
         t_max = [*self.profiles['rho']][-1]
-        t_min = 0.0  # - self.scalars['t_sb']
+        t_min = 0.0
         return t_max, t_min
