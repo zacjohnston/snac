@@ -2,7 +2,7 @@
 Functions that return strings for paths and such.
 
 - Need to set environment variables:
-    - SNAC_DIR (path to SNAC repo)
+    - SNAC (path to SNAC repo)
 
 - Function naming convention:
   - "_filename" name of file only
@@ -26,25 +26,25 @@ def config_filepath(name='snec'):
         name = 'snec'
 
     try:
-        snac_path = os.environ['SNAC_DIR']
+        snac_path = os.environ['SNAC']
     except KeyError:
-        raise EnvironmentError('Environment variable SNAC_DIR not set. '
+        raise EnvironmentError('Environment variable SNAC not set. '
                                'Set path to code directory, e.g., '
-                               "'export SNAC_DIR=${HOME}/path/to/SNAC'")
+                               "'export SNAC=${HOME}/path/to/SNAC'")
 
     return os.path.join(snac_path, 'snac', 'config', f'{name}.ini')
 
 def data_path():
     """
-    return path to $SNAC_DIR/snac/data
+    return path to $SNAC/snac/data
     """
 
     try:
-        snac_path = os.environ['SNAC_DIR']
+        snac_path = os.environ['SNAC']
     except KeyError:
-        raise EnvironmentError('Environment variable SNAC_DIR not set. '
+        raise EnvironmentError('Environment variable SNAC not set. '
                                'Set path to code directory, e.g., '
-                               "'export SNAC_DIR=${HOME}/path/to/SNAC'")
+                               "'export SNAC=${HOME}/path/to/SNAC'")
 
     return os.path.join(snac_path, 'snac', 'data')
 
