@@ -285,9 +285,12 @@ def get_info(model):
     """
     Extract information from info.dat
     """
-    fn = os.path.join(paths.output_path(model), 'info.dat')
-
-    with open(fn, "r") as f:
+    mass = None
+    e_init = None
+    e_bomb = None
+    filepath = os.path.join(paths.output_path(model), 'info.dat')
+    
+    with open(filepath, "r") as f:
         for line in f:
             if 'Mass of the model' in line:
                 mass = float(line.split()[-3])
