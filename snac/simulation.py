@@ -70,7 +70,7 @@ class Simulation:
         verbose : bool
             print information to terminal
         load_profiles : bool
-            do, or do not, load mass profiles
+            load mass profiles
         """
         t0 = time.time()
         self.verbose = verbose
