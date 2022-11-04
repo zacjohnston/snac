@@ -15,7 +15,7 @@ msun = const.M_sun.cgs.value
 
 def tau_sob(density, temp, X, t_exp):
     """
-    Compute Sobolev optical depth profile for FeII 5169. See README for some details.
+    Compute Sobolev optical depth profile for feii 5169. See README for some details.
     
     Parameters:
     -----------
@@ -37,7 +37,7 @@ def tau_sob(density, temp, X, t_exp):
     A_Fe = 56
 
     # fractional ionization table
-    fn = os.path.join(paths.data_path(), 'FeII_5169_eta.dat')
+    fn = os.path.join(paths.data_path(), 'feii_5169_eta.dat')
     rho, Temp, eta = np.loadtxt(fn, unpack=True)
     rho = np.flip(rho)
     Temp = np.flip(Temp)
@@ -102,7 +102,7 @@ def tau_sob(density, temp, X, t_exp):
 
 def iron_velocity(vel, tau_sob):
     """
-    Compute the velocity of the FeII 5169 line by finding where 
+    Compute the velocity of the feii 5169 line by finding where 
     the Sobolev optical depth = 1
 
     If tau_sob !> 0 anywhere (likely because it is 0 zerowhere -- see above) 
@@ -124,11 +124,11 @@ def iron_velocity(vel, tau_sob):
 
     if tau_1_ind > 0:
 
-        v_FeII = vel[tau_1_ind]/1e5
+        v_feii = vel[tau_1_ind]/1e5
         if( vel[tau_1_ind]/1e5 < 1000):
             print(f"This velocity of {vel[tau_1_ind]/1e5} km/s is suspiciously low. \n")
 
-        return v_FeII
+        return v_feii
 
     else:
         return 0.0

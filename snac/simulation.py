@@ -27,13 +27,6 @@ Info
 
 """
 
-# ------------------
-# TODO:
-# fallback, ejecta mass
-# get_scalars needs work for scalability
-# Add plotting functionality
-# ------------------
-
 import os
 import time
 import numpy as np
@@ -43,7 +36,6 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
 # snac
-# from . import analysis
 from . import load
 from . import paths
 from . import plot_tools
@@ -60,7 +52,8 @@ class Simulation:
                  output_dir='Data', verbose=True, load_all=True,
                  reload=False, save=True, load_profiles=True):
         """
-        Object representing a 1D flash simulation
+        Object representing a SNEC simulation
+
         parameters
         ----------
         model : str
@@ -87,13 +80,13 @@ class Simulation:
         self.model_path = paths.model_path(model=model)
         self.output_path = os.path.join(self.model_path, output_dir)
 
-        self.config = None        # model-specific configuration; see load_config(). Dict
-        self.dat = None           # integrated data from .dat; see load_dat()
-        self.profiles = None      # mass profile data for each timestep
+        self.config = None  # model-specific configuration; see load_config(). Dict
+        self.dat = None  # integrated data from .dat; see load_dat()
+        self.profiles = None  # mass profile data for each timestep
         self.solo_profile = None  # profile at one timestep
-        self.scalars = None       # scalar quantities: time of shock breakout..
-        self.vFe = None           # Holds v_Fe(t)
-        self.tau = None           # Hold tau_sob
+        self.scalars = None  # scalar quantities: time of shock breakout..
+        self.vfe = None  # Holds v_Fe(t)
+        self.tau = None  # Hold tau_sob
 
         self.load_config(config=config)
 
@@ -190,15 +183,14 @@ class Simulation:
     #                   Manipulation
     # =======================================================
 
-    def clear_vFe(self):
+    def clear_vfe(self):
         """
-        Clear the self.vFe array.
+        Clear the self.vfe array.
         """
-
-        if (self.vFe != None):
-            self.vFe = None
+        if self.vfe is not None:
+            self.vfe = None
         else:
-            print("vFe is already empty.")
+            print("vfe is already empty.")
 
     def get_dat_day(self, day=50.0):
         """
@@ -207,15 +199,15 @@ class Simulation:
         Parameters:
         day : float
         """
-
-        time = self.dat['time']
-        if (day >= 0.0):
-            ind = np.max(np.where(time <= day * 86400.))
+        t = self.dat['time']
+        if day >= 0.0:
+            ind = np.max(np.where(t <= day * 86400.))
         else:
             ind = 0
 
         for col in self.dat:
-            if col == 'time': continue
+            if col == 'time':
+                continue
 
             label = col + '_solo'
             self.scalars[label] = self.dat[col][ind]
@@ -259,28 +251,27 @@ class Simulation:
     #                   Quantities
     # =======================================================
 
-    def vel_FeII(self, day=50.0):
+    def vel_feii(self, day=50.0):
         """
-        Compute FeII 5169 line velocity from Sobolev optical depth = 1
+        Compute feii 5169 line velocity from Sobolev optical depth = 1
 
         NOTE: Not supported for default version of SNEC. I've added an additional 
         profile to output the hydrogen profiles. These are used to approximate the 
         iron 56 number density - Fe56 mass fractions are preffered, but not necessarily available
         in the progenitor set I was using.
         """
-
         if "H_frac" not in self.config['profiles']['fields']:
             raise ValueError(f'Mass fraction profile not supplied.')
 
-        if (self.solo_profile.day != day):
+        if self.solo_profile.day != day:
             self.get_profile_day(day=day)
 
-        # NOTE: This can be duplicated if you call snacs.vel_FeII extra times
+        # NOTE: This can be duplicated if you call snacs.vel_feii extra times
         # It just keeps appending until reloaded.
-        if (self.vFe == None):
-            self.vFe = []
+        if self.vfe is None:
+            self.vfe = []
 
-        if (self.tau == None):
+        if self.tau is None:
             self.tau = []
 
         tau = quantities.tau_sob(density=self.solo_profile['rho'],
@@ -293,7 +284,7 @@ class Simulation:
         self.scalars['v_Fe'] = quantities.iron_velocity(
             self.solo_profile['vel'], tau_sob=tau)
 
-        self.vFe.append(quantities.iron_velocity(
+        self.vfe.append(quantities.iron_velocity(
             self.solo_profile['vel'], tau_sob=tau))
 
     def compute_total_energy(self, day=0.0):
@@ -305,11 +296,10 @@ class Simulation:
         -----------
         day : float
         """
-
         if self.solo_profile is None:
             self.get_profile_day(day=day)
 
-        if (self.solo_profile.day != day):
+        if self.solo_profile.day != day:
             self.get_profile_day(day=day)
 
         self.solo_profile['e_tot'] = quantities.total_energy(
@@ -327,14 +317,13 @@ class Simulation:
         -----------
         day : float
         """
-
         if "e_tot" not in self.solo_profile:
             self.compute_total_energy(day=day)
 
         if self.solo_profile is None:
             self.get_profile_day(day=day)
 
-        if (self.solo_profile.day != day):
+        if self.solo_profile.day != day:
             self.get_profile_day(day=day)
 
         self.scalars['bound_mass'] = quantities.bound_mass(
@@ -349,11 +338,10 @@ class Simulation:
         -----------
         day : float
         """
-
         if self.solo_profile is None:
             self.get_profile_day(day=day)
 
-        if (self.solo_profile.day != day):
+        if self.solo_profile.day != day:
             self.get_profile_day(day=day)
 
         self.scalars['M_ej'] = quantities.ejecta_mass(
@@ -381,7 +369,6 @@ class Simulation:
         max_cols : bool
         sub_figsize : tuple
         """
-
         y_var_list = tools.ensure_sequence(y_var_list)
         n_var = len(y_var_list)
         fig, ax = plot_tools.setup_subplots(n_var, max_cols=max_cols,
@@ -398,7 +385,7 @@ class Simulation:
 
     def plot_profile(self, t, y_var, x_var='mass', y_scale=None, x_scale=None,
                      ax=None, legend=False, title=True,
-                     ylims=None, xlims=None, figsize=(8, 6), label=None,
+                     figsize=(8, 6), label=None,
                      linestyle='-', marker=''):
         """Plot given profile variable
         parameters
@@ -414,14 +401,11 @@ class Simulation:
         ax : Axes
         legend : bool
         title : bool
-        ylims : [min, max]
-        xlims : [min, max]
         figsize : [width, height]
         label : str
         linestyle : str
         marker : str
         """
-
         fig, ax = self._setup_fig_ax(ax=ax, figsize=figsize)
         self._set_ax_title(ax, t=t, title=title)
         self._set_ax_scales(ax, y_var, x_var=x_var, y_scale=y_scale, x_scale=x_scale)
@@ -438,7 +422,7 @@ class Simulation:
         return fig
 
     def plot_slider(self, y_var, x_var='mass', y_scale=None, x_scale=None,
-                    figsize=(8, 6), title=True, xlims=None, ylims=None, legend=True,
+                    figsize=(8, 6), title=True, legend=True,
                     linestyle='-', marker=''):
 
         """
@@ -452,14 +436,10 @@ class Simulation:
         x_scale : {'log', 'linear'}
         figsize : [width, height]
         title : bool
-        xlims : [min, max]
-        ylims : [min, max]
         legend : bool
         linestyle : str
         marker : str
         """
-        # TODO: Needs work setting y axis scales.
-
         fig, profile_ax, slider_ax = self._setup_slider_fig(figsize=figsize)
         t_max, t_min = self._get_slider_bounds()
 
@@ -467,7 +447,7 @@ class Simulation:
 
         self.plot_profile(t_max, y_var=y_var, x_var=x_var, y_scale=y_scale,
                           x_scale=x_scale, ax=profile_ax, legend=legend,
-                          title=title, ylims=ylims, xlims=xlims, figsize=figsize,
+                          title=title, figsize=figsize,
                           linestyle=linestyle, marker=marker)
 
         def update(t):
@@ -545,7 +525,6 @@ class Simulation:
         ax : Axes
         title : bool
         """
-        # TODO: account for different zero points/starting times
         if title:
             ax.set_title(f't = {t:.3f} s')
 
@@ -567,7 +546,6 @@ class Simulation:
         ax : Axes
         legend : bool
         """
-        c = self.config['plotting']
         if legend:
             ax.legend(loc=loc)
 
@@ -578,7 +556,6 @@ class Simulation:
         ax : Axes
         figsize : [width, height]
         """
-        c = self.config['plotting']  # TODO: default settings from config
         fig = None
 
         if ax is None:
@@ -592,7 +569,6 @@ class Simulation:
         ----------
         figsize : [width, height]
         """
-        c = self.config['plotting']  # TODO: default settings from config
         fig = plt.figure(figsize=figsize)
         profile_ax = fig.add_axes([0.1, 0.2, 0.8, 0.65])
         slider_ax = fig.add_axes([0.1, 0.05, 0.8, 0.05])
