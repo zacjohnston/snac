@@ -40,7 +40,6 @@ from . import load
 from . import paths
 from . import plot_tools
 from . import tools
-from . import quantities
 
 
 class Simulation:
@@ -246,108 +245,6 @@ class Simulation:
         df.day = day  # time looking for.
 
         self.solo_profile = df
-
-    # =======================================================
-    #                   Quantities
-    # =======================================================
-
-    def vel_feii(self, day=50.0):
-        """
-        Compute feii 5169 line velocity from Sobolev optical depth = 1
-
-        NOTE: Not supported for default version of SNEC. I've added an additional 
-        profile to output the hydrogen profiles. These are used to approximate the 
-        iron 56 number density - Fe56 mass fractions are preffered, but not necessarily available
-        in the progenitor set I was using.
-        """
-        if "H_frac" not in self.config['profiles']['fields']:
-            raise ValueError(f'Mass fraction profile not supplied.')
-
-        if self.solo_profile.day != day:
-            self.get_profile_day(day=day)
-
-        # NOTE: This can be duplicated if you call snacs.vel_feii extra times
-        # It just keeps appending until reloaded.
-        if self.vfe is None:
-            self.vfe = []
-
-        if self.tau is None:
-            self.tau = []
-
-        tau = quantities.tau_sob(density=self.solo_profile['rho'],
-                                 temp=self.solo_profile['temp'],
-                                 X=self.solo_profile['H_frac'],
-                                 t_exp=day)
-
-        self.tau.append(tau)
-
-        self.scalars['v_Fe'] = quantities.iron_velocity(
-            self.solo_profile['vel'], tau_sob=tau)
-
-        self.vfe.append(quantities.iron_velocity(
-            self.solo_profile['vel'], tau_sob=tau))
-
-    def compute_total_energy(self, day=0.0):
-        """
-        Compute specific total energy profile.
-        Recomputes and overwrites self.solo_profile
-
-        Parameters:
-        -----------
-        day : float
-        """
-        if self.solo_profile is None:
-            self.get_profile_day(day=day)
-
-        if self.solo_profile.day != day:
-            self.get_profile_day(day=day)
-
-        self.solo_profile['e_tot'] = quantities.total_energy(
-            mass=self.solo_profile['mass'],
-            radius=self.solo_profile['radius'],
-            vel=self.solo_profile['vel'],
-            rho=self.solo_profile['rho'],
-            eps=self.solo_profile['eps'])
-
-    def compute_bound_mass(self, day=0.0):
-        """
-        Compute bound mass. See quantities.bound_mass()
-
-        Parameters:
-        -----------
-        day : float
-        """
-        if "e_tot" not in self.solo_profile:
-            self.compute_total_energy(day=day)
-
-        if self.solo_profile is None:
-            self.get_profile_day(day=day)
-
-        if self.solo_profile.day != day:
-            self.get_profile_day(day=day)
-
-        self.scalars['bound_mass'] = quantities.bound_mass(
-            e_tot=self.solo_profile['e_tot'],
-            mass=self.solo_profile['mass'])
-
-    def compute_ejecta_mass(self, day=0.0):
-        """
-        Compute bound mass. See quantities.bound_mass()
-
-        Parameters:
-        -----------
-        day : float
-        """
-        if self.solo_profile is None:
-            self.get_profile_day(day=day)
-
-        if self.solo_profile.day != day:
-            self.get_profile_day(day=day)
-
-        self.scalars['M_ej'] = quantities.ejecta_mass(
-            e_tot=self.solo_profile['e_tot'],
-            mass=self.solo_profile['mass']
-        )
 
     # =======================================================
     #                      Plotting

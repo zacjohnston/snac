@@ -15,6 +15,7 @@ Functions that return strings for paths and such.
 
 import os
 
+
 def config_filepath(name='snec'):
     """
     Return path to config file
@@ -33,6 +34,7 @@ def config_filepath(name='snec'):
                                "'export SNAC=${HOME}/path/to/SNAC'")
 
     return os.path.join(snac_path, 'snac', 'config', f'{name}.ini')
+
 
 def data_path():
     """
@@ -64,7 +66,7 @@ def model_path(model):
         snec_models_path = os.environ['SNEC_MODELS']
     except KeyError:
         raise EnvironmentError('Environment variable SNEC_MODELS not set. '
-                               'Set path to directory containing SNEC models, e.g., ' )
+                               'Set path to directory containing SNEC models, e.g., ')
 
     return os.path.join(snec_models_path, model)
 
@@ -83,6 +85,7 @@ def output_path(model, output_dir='Data'):
     """
     m_path = model_path(model)
     return os.path.join(m_path, output_dir)
+
 
 # ===============================================================
 #                      Dat files
