@@ -289,7 +289,7 @@ def get_info(model):
     e_init = None
     e_bomb = None
     filepath = os.path.join(paths.output_path(model), 'info.dat')
-    
+
     with open(filepath, "r") as f:
         for line in f:
             if 'Mass of the model' in line:
