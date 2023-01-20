@@ -1,8 +1,2 @@
-__pycache__
-*.pyc
-.DS_Store
 scratch/
-.vscode/
-*checkpoint.ipynb
 temp/
-.idea/
